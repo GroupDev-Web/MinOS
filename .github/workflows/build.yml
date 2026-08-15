@@ -27,7 +27,7 @@ jobs:
         run: |
           docker run --rm --privileged \
             -v "$PWD:/src" -w /src archlinux:latest \
-            bash -lc 'pacman -Syu --noconfirm archiso && ./scripts/build.sh x86_64'
+            bash -lc 'pacman -Syu --noconfirm archiso grub && ./scripts/build.sh x86_64'
       - uses: actions/upload-artifact@v4
         with:
           name: MinOS-x86_64
@@ -48,9 +48,21 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools squashfs-tools
-          curl -fL --retry 3 \
-            https://gr.mirror.archlinux32.org/archisos/archlinux32-2024.07.10-i686.iso \
-            -o /tmp/archlinux32.iso
+          iso_name=archlinux32-2024.07.10-i686.iso
+          mirrors=(
+            https://mirror.math.princeton.edu/pub/archlinux32/archisos
+            https://mirror.clarkson.edu/archlinux32/archisos
+            https://mirror.yandex.ru/archlinux32/archisos
+            https://mirror.archlinux32.org/archisos
+          )
+          for mirror in "${mirrors[@]}"; do
+            if curl -fL --connect-timeout 15 --retry 2 \
+              "$mirror/$iso_name" -o /tmp/archlinux32.iso; then
+              break
+            fi
+            rm -f /tmp/archlinux32.iso
+          done
+          test -s /tmp/archlinux32.iso
           mkdir -p /tmp/archlinux32-iso /tmp/archlinux32-root
           bsdtar -xf /tmp/archlinux32.iso -C /tmp/archlinux32-iso
           rootfs="$(find /tmp/archlinux32-iso -type f -name 'airootfs.sfs' -print -quit)"
