@@ -44,11 +44,25 @@ jobs:
       - uses: docker/setup-qemu-action@v3
         with:
           platforms: 386
-      - name: Build i686 ISO with Arch Linux 32
+      - name: Create Arch Linux 32 build container
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools squashfs-tools
+          curl -fL --retry 3 \
+            https://gr.mirror.archlinux32.org/archisos/archlinux32-2024.07.10-i686.iso \
+            -o /tmp/archlinux32.iso
+          mkdir -p /tmp/archlinux32-iso /tmp/archlinux32-root
+          bsdtar -xf /tmp/archlinux32.iso -C /tmp/archlinux32-iso
+          rootfs="$(find /tmp/archlinux32-iso -type f -name 'airootfs.sfs' -print -quit)"
+          test -n "$rootfs"
+          sudo unsquashfs -d /tmp/archlinux32-root "$rootfs"
+          sudo tar --numeric-owner -C /tmp/archlinux32-root -cf - . | \
+            docker import --platform linux/386 - minos-archlinux32:latest
+      - name: Build i686 ISO
         run: |
           docker run --rm --privileged --platform linux/386 \
-            -v "$PWD:/src" -w /src archlinux32/archlinux:latest \
-            bash -lc 'pacman-key --init && pacman-key --populate archlinux32 && pacman -Syu --noconfirm archiso32 && ./scripts/build.sh i686'
+            -v "$PWD:/src" -w /src minos-archlinux32:latest \
+            bash -lc 'pacman-key --init && pacman-key --populate archlinux32 && pacman -Syu --noconfirm archiso && ./scripts/build.sh i686'
       - uses: actions/upload-artifact@v4
         with:
           name: MinOS-i686
@@ -71,4 +85,3 @@ jobs:
         with:
           files: release/*
           generate_release_notes: true
-
