@@ -69,12 +69,21 @@ jobs:
           test -n "$rootfs"
           sudo unsquashfs -d /tmp/archlinux32-root "$rootfs"
           sudo tar --numeric-owner -C /tmp/archlinux32-root -cf - . | \
+            docker import --platform linux/386 - minos-archlinux32-bootstrap:latest
+      - name: Create clean Arch Linux 32 build root
+        run: |
+          mkdir -p /tmp/archlinux32-clean
+          docker run --rm --privileged --platform linux/386 \
+            -v /tmp/archlinux32-clean:/output \
+            minos-archlinux32-bootstrap:latest \
+            bash -lc 'pacman-key --init && pacman-key --populate archlinux32 && pacman -Sy --noconfirm && pacstrap -C /etc/pacman.conf -K /output base archiso grub syslinux'
+          sudo tar --numeric-owner -C /tmp/archlinux32-clean -cf - . | \
             docker import --platform linux/386 - minos-archlinux32:latest
       - name: Build i686 ISO
         run: |
           docker run --rm --privileged --platform linux/386 \
             -v "$PWD:/src" -w /src minos-archlinux32:latest \
-            bash -lc 'pacman-key --init && pacman-key --populate archlinux32 && pacman -Syu --noconfirm archiso && ./scripts/build.sh i686'
+            bash -lc './scripts/build.sh i686'
       - uses: actions/upload-artifact@v4
         with:
           name: MinOS-i686
