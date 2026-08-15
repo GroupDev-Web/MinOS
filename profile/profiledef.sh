@@ -8,7 +8,7 @@ iso_application="MinOS rescue and chroot environment"
 iso_version="$(date +%Y.%m.%d)"
 install_dir="minos"
 buildmodes=('iso')
-bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito' 'uefi-ia32.grub.esp' 'uefi-x64.grub.esp' 'uefi-ia32.grub.eltorito' 'uefi-x64.grub.eltorito')
+bootmodes=('bios.syslinux' 'uefi.grub')
 arch="x86_64"
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
@@ -19,4 +19,3 @@ file_permissions=(
   ["/usr/local/bin/minos-chroot"]="0:0:755"
   ["/usr/local/bin/minos-help"]="0:0:755"
 )
-
