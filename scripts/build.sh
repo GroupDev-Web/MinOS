@@ -52,7 +52,7 @@ done
 
 if [[ "$arch" == i686 ]]; then
   # Arch Linux 32 uses BIOS boot for broad 32-bit hardware compatibility.
-  sed -i "s/^bootmodes=.*/bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito')/" "$tmp_profile/profiledef.sh"
+  sed -i "s/^bootmodes=.*/bootmodes=('bios.syslinux')/" "$tmp_profile/profiledef.sh"
 fi
 
 mkarchiso -v -w "$work" -o "$out" "$tmp_profile"
