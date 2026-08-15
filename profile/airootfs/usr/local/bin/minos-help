@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+cat <<'EOF'
+
+  __  __ _       ___  ____
+ |  \/  (_)_ __ / _ \/ ___|
+ | |\/| | | '_ \ | | \___ \
+ | |  | | | | | | |_| |___) |
+ |_|  |_|_|_| |_|\___/|____/
+
+Tiny Arch-based rescue OS. You are root; be careful with disk commands.
+
+Wi-Fi:       iwctl
+Disks:       lsblk -f
+Mount root:  mount /dev/ROOT /mnt
+Arch chroot: arch-chroot /mnt
+Any chroot:  minos-chroot /mnt
+Network:     ip addr; ping archlinux.org
+Hardware:    lspci -k; lsusb; dmesg -T
+
+EOF
+

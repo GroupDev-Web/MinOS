@@ -1,0 +1,74 @@
+name: Build MinOS
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source
+        run: ./scripts/validate.sh
+
+  build-x86_64:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build x86_64 ISO
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:/src" -w /src archlinux:latest \
+            bash -lc 'pacman -Syu --noconfirm archiso && ./scripts/build.sh x86_64'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MinOS-x86_64
+          path: |
+            out/MinOS-x86_64.iso
+            out/MinOS-x86_64.iso.sha256
+          if-no-files-found: error
+
+  build-i686:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: 386
+      - name: Build i686 ISO with Arch Linux 32
+        run: |
+          docker run --rm --privileged --platform linux/386 \
+            -v "$PWD:/src" -w /src archlinux32/archlinux:latest \
+            bash -lc 'pacman-key --init && pacman-key --populate archlinux32 && pacman -Syu --noconfirm archiso32 && ./scripts/build.sh i686'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MinOS-i686
+          path: |
+            out/MinOS-i686.iso
+            out/MinOS-i686.iso.sha256
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-x86_64, build-i686]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: MinOS-*
+          merge-multiple: true
+          path: release
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+

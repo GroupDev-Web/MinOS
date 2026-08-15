@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-/mnt}"
+[[ -d "$target" ]] || { echo "Target does not exist: $target" >&2; exit 1; }
+[[ -x "$target/bin/sh" ]] || { echo "No executable /bin/sh inside $target" >&2; exit 1; }
+
+for path in dev proc sys run; do
+  mkdir -p "$target/$path"
+done
+
+mountpoint -q "$target/dev"  || mount --rbind /dev "$target/dev"
+mountpoint -q "$target/proc" || mount -t proc proc "$target/proc"
+mountpoint -q "$target/sys"  || mount --rbind /sys "$target/sys"
+mountpoint -q "$target/run"  || mount --rbind /run "$target/run"
+mount --make-rslave "$target/dev"
+mount --make-rslave "$target/sys"
+mount --make-rslave "$target/run"
+
+if [[ -e /etc/resolv.conf ]]; then
+  cp -L /etc/resolv.conf "$target/etc/resolv.conf"
+fi
+
+exec chroot "$target" /bin/sh -l
+
