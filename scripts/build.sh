@@ -16,7 +16,7 @@ case "$arch" in
     ;;
   i686)
     command -v mkarchiso >/dev/null || {
-      echo "mkarchiso/archiso32 is required inside an Arch Linux 32 environment." >&2
+      echo "mkarchiso is required inside an Arch Linux 32 environment." >&2
       exit 1
     }
     ;;
@@ -36,8 +36,11 @@ cp -a /usr/share/archiso/configs/releng/. "$tmp_profile/"
 cp -a "$profile/." "$tmp_profile/"
 sed -i "s/^arch=.*/arch=\"$arch\"/" "$tmp_profile/profiledef.sh"
 
-# mkarchiso selects packages.${arch}.
-cp "$tmp_profile/packages.x86_64" "$tmp_profile/packages.$arch"
+# mkarchiso selects packages.${arch}. The x86_64 manifest already has the
+# correct name, so only create a second manifest for other architectures.
+if [[ "$arch" != x86_64 ]]; then
+  cp "$tmp_profile/packages.x86_64" "$tmp_profile/packages.$arch"
+fi
 
 # Git cannot represent symlinks reliably through every connector, so create the
 # service enablement links in the disposable profile.
